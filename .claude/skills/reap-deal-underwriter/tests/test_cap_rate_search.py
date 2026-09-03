@@ -59,16 +59,40 @@ def test_pdf_chart_only_reports_no_text_match_and_points_at_chart_extract(monkey
 
 def test_dense_survey_table_collapses_to_one_candidate_per_row():
     # Mirrors a real CBRE Cap Rate Survey table row: many '%' signs packed
-    # within a couple hundred characters. Before the overlap-merge fix this
-    # produced ~15 near-duplicate candidates for this single row alone.
+    # within a couple hundred characters, with a neighboring market's own
+    # figures sitting close enough to fall inside Milwaukee's naive context
+    # window. Before the market-anchored pass this produced ~15 near-
+    # duplicate candidates for one row, then still mislabeled Kansas City's
+    # own numbers as a Milwaukee match.
     row = (
         "Kansas City 4.25% - 4.5% 4% - 4.5% 4.75% - 5.25% 4.25% - 4.75% "
         "Milwaukee 4.75% - 5.25% 4.5% - 5% 5.5% - 5.75% 4.75% - 5.5% "
         "Minneapolis/St. Paul 4.25% - 4.5% 4% - 4.25% 4.75% - 5% 4.5% - 4.75%"
     )
     candidates = cap_rate_search.find_candidates(row, "Milwaukee", None, page=21)
-    assert len(candidates) <= 2, f"expected the Milwaukee row to collapse, got {len(candidates)} candidates"
-    assert any(c["mentions_market"] for c in candidates)
+    assert len(candidates) == 1, f"expected exactly one Milwaukee candidate, got {len(candidates)}"
+    assert candidates[0]["mentions_market"] is True
+    assert candidates[0]["value_pct"] == 4.75
+    assert "Milwaukee 4.75% - 5.25%" in candidates[0]["snippet"]
+
+
+def test_neighboring_market_not_mislabeled_when_cap_rate_language_present():
+    # Same shape as the real CBRE PDF: "cap rate" language sits near the top
+    # of the table, close enough to fall in a neighboring city's own context
+    # window -- that city's numbers are a legitimate generic-pass candidate,
+    # but must NOT be flagged as a Milwaukee match just because "Milwaukee"
+    # happens to be within reading distance on the page.
+    text = (
+        "United States Cap Rate Survey H2 2021 | Report Apartment Stabilized Market "
+        "Kansas City 4.25% - 4.5% 4% - 4.5% Milwaukee 4.75% - 5.25% 4.5% - 5%"
+    )
+    candidates = cap_rate_search.find_candidates(text, "Milwaukee", None, page=21)
+    milwaukee_hit = next(c for c in candidates if "4.75% - 5.25%" in c["snippet"] and c["value_pct"] == 4.75)
+    assert milwaukee_hit["mentions_market"] is True
+
+    kansas_city_hits = [c for c in candidates if c is not milwaukee_hit]
+    assert kansas_city_hits, "expected Kansas City's own figures to still surface as a candidate"
+    assert all(c["mentions_market"] is False for c in kansas_city_hits)
 
 
 def test_rank_and_cap_truncates_and_prioritizes_market_matches():

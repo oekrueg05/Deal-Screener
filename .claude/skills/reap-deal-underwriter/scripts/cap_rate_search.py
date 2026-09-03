@@ -38,6 +38,7 @@ from _pdf import page_texts  # noqa: E402
 PCT_RE = re.compile(r"(\d{1,2}(?:\.\d{1,2})?)\s*%")
 CAP_RATE_TERMS = ("cap rate", "capitalization rate", "going-in yield", "exit cap")
 CONTEXT_CHARS = 180
+MARKET_ROW_CHARS = 220  # a table row's own values typically follow the market name within this span
 
 
 def sniff_kind(content):
@@ -53,9 +54,13 @@ def html_to_text(html_bytes):
     return soup.get_text(separator=" ")
 
 
-def score_match(context_lower, market, asset_tier):
+def score_match(context_lower, asset_tier, market=None):
+    """market=None skips the market check entirely (used for the generic pass, where a real
+    market match should already have been captured by the market-anchored pass -- checking
+    market presence again here just re-flags a neighboring table row's numbers as a false
+    "market match" because the market name happens to fall inside this window too)."""
     has_cap_rate = any(term in context_lower for term in CAP_RATE_TERMS)
-    has_market = market.lower() in context_lower
+    has_market = bool(market) and market.lower() in context_lower
     has_tier = bool(asset_tier) and asset_tier.lower() in context_lower
     score = int(has_cap_rate) * 2 + int(has_market) * 2 + int(has_tier)
     return score, has_cap_rate, has_market, has_tier
@@ -63,25 +68,54 @@ def score_match(context_lower, market, asset_tier):
 
 def find_candidates(text, market, asset_tier, page=None):
     """
-    Score every percentage in text by proximity to cap-rate/market/tier
-    language. A dense rate-survey table can pack a dozen '%' signs within a
-    couple hundred characters (e.g. "Milwaukee 4.75% - 5.25% ... 5.5% - 5.75%
-    ..."), and each one's context window would otherwise re-capture the same
-    table row -- so matches whose windows overlap a previously *kept* match
-    collapse into that one candidate instead of spawning a near-duplicate
-    per number.
+    Two passes. First, anchor directly on each occurrence of the market name
+    and capture the row of figures that follows it -- this is what a rate-
+    survey table actually looks like ("Milwaukee 4.75% - 5.25% ... 5.5% -
+    5.75% ...."), so it produces exactly one candidate per table the market
+    appears in, not one per '%' sign. Second, a generic pass over whatever
+    percentages remain (prose mentions of cap rates, other markets) --
+    excluding anything the market pass already covered, and *not* re-checking
+    for the market name, so a neighboring row (e.g. Kansas City's figures,
+    which happen to sit within reading distance of "Milwaukee" on the page)
+    doesn't get mislabeled as a market match of its own.
     """
     candidates = []
+    consumed_spans = []
+
+    if market:
+        for mm in re.finditer(re.escape(market), text, re.IGNORECASE):
+            window_start, window_end = mm.start(), min(len(text), mm.end() + MARKET_ROW_CHARS)
+            row_pct_matches = list(PCT_RE.finditer(text, window_start, window_end))
+            if not row_pct_matches:
+                continue
+            ctx_start = max(0, window_start - CONTEXT_CHARS)
+            snippet = " ".join(text[ctx_start:window_end].split())
+            score, has_cap_rate, has_market, has_tier = score_match(snippet.lower(), asset_tier, market)
+            candidates.append(
+                {
+                    "value_pct": float(row_pct_matches[0].group(1)),
+                    "snippet": snippet,
+                    "page": page,
+                    "score": score,
+                    "mentions_cap_rate_language": has_cap_rate,
+                    "mentions_market": has_market,
+                    "mentions_asset_tier": has_tier,
+                }
+            )
+            consumed_spans.append((window_start, window_end))
+
     last_kept_end = -CONTEXT_CHARS  # sentinel so the first match is never skipped
     for m in PCT_RE.finditer(text):
+        if any(start <= m.start() < end for start, end in consumed_spans):
+            continue  # already covered by a market-anchored candidate above
         if m.start() - last_kept_end < CONTEXT_CHARS:
             continue  # overlaps the previously kept match's context window
         start = max(0, m.start() - CONTEXT_CHARS)
         end = min(len(text), m.end() + CONTEXT_CHARS)
         snippet = " ".join(text[start:end].split())
-        score, has_cap_rate, has_market, has_tier = score_match(snippet.lower(), market, asset_tier)
+        score, has_cap_rate, has_market, has_tier = score_match(snippet.lower(), asset_tier)
         if score == 0:
-            continue  # a bare percentage with no cap-rate/market/tier context isn't useful
+            continue  # a bare percentage with no cap-rate/tier context isn't useful
         last_kept_end = m.end()
         candidates.append(
             {
