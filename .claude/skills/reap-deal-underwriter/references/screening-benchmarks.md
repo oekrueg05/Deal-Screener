@@ -36,9 +36,9 @@ time, and it's the single highest-leverage instance of a broader pattern — see
 `references/claim-verification.md` for the full set of OM-claim categories worth verifying this
 way (financing rate, growth assumptions, cited comps, location claims, entitlement status, supply
 pipeline, sponsor background) across any asset type. Cap rate gets its own detailed section here
-because it usually drives most of the terminal value in the return calc, so it's worth verifying
-on every single deal without exception, whereas the other categories are judgment calls on
-relevance per deal:
+because it usually drives most of the terminal value in the return calc. It's one of only two
+categories worth verifying on every single deal without exception — sponsor background (category
+9) is the other — while the remaining categories are judgment calls on relevance per deal:
 - **Search for a tiered source first, not a headline national average — and don't gatekeep to a
   short list of big-name brokerages.** CBRE, JLL, Marcus & Millichap, and Cushman & Wakefield all
   publish cap rates broken out by market *and* asset class/quality tier (e.g., "suburban Class

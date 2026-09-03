@@ -12,6 +12,26 @@ This is the **default deliverable for every deal Vito sends**. The full model
 are a different, later thing — post-vote diligence for a deal the class actually decides to pursue
 with real capital, not part of forming the vote itself.
 
+## Citations
+
+Every number or claim pulled from the OM gets a page citation, inline, right where it's used —
+`(p. 38)` or `(pp. 38-39)` if a figure is assembled from more than one page. This applies
+everywhere in the document: Snapshot, the Return section, every row of Screen Checks, every SWOT
+bullet, every Unknown. The point is that anyone reading this on their phone in the room can flip
+straight to the source page and check it themselves, mid-discussion, without having to search the
+whole OM — don't make them take the number on faith.
+
+This isn't optional for the figures that carry the recommendation (return metrics, DSCR, exit
+cap, basis) — if a number in the Screen Checks table or the Return section doesn't have a page
+next to it, go find the page before delivering the screener, don't ship it uncited. A number
+computed by REAP (e.g. the LP-level IRR after applying the promote) instead cites the OM page(s)
+the *inputs* came from, since the computed figure itself doesn't live on any single page.
+
+Externally-verified figures (cap rate, sponsor background, census data, etc. — see
+`references/claim-verification.md`) get their own source citation the same way they already do
+(source name, and a page number too when the source is itself a paged document, e.g. a PDF cap
+rate survey) — those aren't OM page citations, don't label them as if they were.
+
 ## Structure
 
 **[Deal Name] — Screener**
@@ -38,9 +58,10 @@ promote layer at all (REAP investing directly), use project-level figures and sa
 
 **Screen Checks**
 A compact table (or tight bullets if a table doesn't fit the context): one line per metric from
-`references/screening-benchmarks.md` — metric, REAP's number, the reference range, and a
-pass/marginal/fail/insufficient-data read. This is the "show your work" behind the
-recommendation — keep each line to the number and the call, not a paragraph of explanation.
+`references/screening-benchmarks.md` — metric, REAP's number (with its OM page citation), the
+reference range, and a pass/marginal/fail/insufficient-data read. This is the "show your work"
+behind the recommendation — keep each line to the number and the call, not a paragraph of
+explanation.
 Always include a line verifying the exit cap (and going-in/stabilized yield, if applicable)
 against real market data via web search — cite what was found briefly (e.g., "~5.0-5.5% per
 [source]") rather than just restating the OM's own assumption back at itself as if that settles
@@ -106,3 +127,6 @@ This gets read fast, often on a phone, so it should be scannable at a glance, no
   it matters most** — ...") so a skim of just the bolded openers gives the gist.
 - Never sacrifice the content rules above (bullet caps, length budget) for decoration — formatting
   makes the required content easier to scan, it doesn't earn room for more of it.
+- Keep page citations short and inline — `(p. 38)` right after the number, not a footnote or an
+  endnotes section. A citation should never be long enough to break the scannability of a bulleted
+  line or a table cell.

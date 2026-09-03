@@ -8,21 +8,29 @@ specific deal or asset type. Which categories actually apply, and how deep to go
 entirely on what's present and material in the specific OM in front of you.
 
 ## Verification scripts (Claude Code only)
-`scripts/` has small, tested Python scripts that harden six of these nine categories against a
-real public source instead of a hopeful web search (see each category below for which script and
-how). `scripts/verified_data_cache.py` caches any verified figure by (category, market,
-asset_tier) so a repeat market doesn't need a fresh search on the next deal. None of this applies
-in a chat-only environment without code execution — fall back to web search there, same as before.
-Categories 3, 4, 7, and 8 have no script yet; still use a targeted web search for those.
+`scripts/` has small, tested Python scripts that harden five of these nine categories (1, 2, 5, 6,
+9 — including both of the always-run ones) against a real public source instead of a hopeful web
+search (see each category below for which script and how). `scripts/verified_data_cache.py`
+caches any verified figure by (category, market, asset_tier) so a repeat market doesn't need a
+fresh search on the next deal. None of this applies in a chat-only environment without code
+execution — fall back to web search there, same as before. Categories 3, 4, 7, and 8 have no
+script yet; still use a targeted web search for those.
 
 ## How to use this file
-Scan the OM for claims falling into the categories below. For each one that's present *and*
-material to the return case, verify it against a live public source before it goes into the
-screener as accepted fact rather than a sponsor's assertion. Skip categories that don't apply — a
-stabilized acquisition won't have entitlement claims to check; a raw land deal won't have existing
-rent comps; an industrial deal shouldn't get an apartment rent index applied to it. This is a
-judgment call on relevance and depth per deal, not a mandatory 9-point run-through — the screener
-still has to stay fast (see `screener-format.md`'s speed-over-completeness principle).
+Two categories are not a judgment call: **2 (yield/cap rate)** and **9 (sponsor background)** run
+on every single deal, regardless of how clean the rest of the OM looks — every deal has a cap
+rate assumption and every deal has a sponsor, so neither is ever "not applicable." Skipping either
+because nothing else about the deal raised a flag defeats the point; the flag is often exactly
+what a search like this is for.
+
+For the remaining seven categories, scan the OM for claims falling into them and, for each one
+that's present *and* material to the return case, verify it against a live public source before it
+goes into the screener as accepted fact rather than a sponsor's assertion. Skip categories that
+don't apply — a stabilized acquisition won't have entitlement claims to check; a raw land deal
+won't have existing rent comps; an industrial deal shouldn't get an apartment rent index applied
+to it. This is a judgment call on relevance and depth per deal, not a mandatory run-through — the
+screener still has to stay fast (see `screener-format.md`'s speed-over-completeness principle).
+Categories 2 and 9 are the exception to that judgment call, not the rule.
 
 ## Categories
 
@@ -103,10 +111,13 @@ or a planning department's pipeline where available, rather than trusting the sp
 self-reported framing of how much competing product is coming. Applies to any income-producing
 asset type, since new supply is a real risk to every one of them.
 
-### 9. Sponsor background
+### 9. Sponsor background — always run, every deal, no exceptions
 A basic news/litigation search on the sponsor entity and named principals — standard practice for
-an institutional LP's diligence, and something the skill currently does none of. Applies to every
-deal, since every OM has a sponsor.
+an institutional LP's diligence. This is one of the two categories in this file that isn't a
+judgment call (the other is cap rate, category 2): every OM has a sponsor, so this always applies,
+and it always gets run regardless of how the rest of the deal reads. A clean-looking OM is exactly
+the case where a background check is most likely to be the thing that changes the recommendation
+— don't reason your way out of running it because nothing else raised a flag.
 
 **In Claude Code:** `WebSearch` for `"<sponsor entity>" lawsuit OR litigation OR SEC OR
 bankruptcy` (and the same per named principal), then run `scripts/sponsor_background_check.py
@@ -118,7 +129,8 @@ the search, not a verified clean record.
 ## Discipline
 - Only check what's actually material and present in this specific OM — forcing an irrelevant
   category wastes the screener's limited length budget on something that doesn't move the
-  recommendation.
+  recommendation. This rule is about categories 1, 3-8; categories 2 and 9 run regardless (see
+  "How to use this file" above).
 - Cite the specific source, same discipline as the cap rate check — never present a verified
   number without naming where it came from.
 - If nothing checkable turns up after a reasonable search, say so plainly in Unknowns rather than

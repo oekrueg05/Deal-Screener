@@ -1,7 +1,10 @@
 # Standard Deal Input Schema
 
 Every deal gets mapped to these fields. Fields marked **[SCREEN]** are what the fast screener
-needs — pull these first and don't stall the screen chasing the rest. Fields marked **[DEEP-DIVE]**
+needs — pull these first and don't stall the screen chasing the rest. Note the OM page number for
+each field as it's pulled, not after the fact — the screener (`references/screener-format.md`)
+cites the source page for every figure it uses, and it's far easier to capture that page number
+during this extraction pass than to go re-find it while writing the document. Fields marked **[DEEP-DIVE]**
 only matter if the deal clears the screen and a full underwriting model gets built (SKILL.md step
 9) — skip them at the screen stage. Mark any [SCREEN] field not found in source materials as
 MISSING and resolve via `asset-defaults.md`; [DEEP-DIVE] fields can stay MISSING until/unless the

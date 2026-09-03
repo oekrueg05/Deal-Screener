@@ -27,9 +27,11 @@ only for a deal the class votes to pursue, not part of forming the vote itself.
    pastes or uploads directly. Extract what's needed using `references/input-schema.md` as a
    guide — pull the headline financial figures, the waterfall/promote terms, debt terms, and
    exit assumptions; don't chase every itemized expense line the way a full underwrite would.
-   Check the incoming deal name (and location/unit count) against `deal_log.csv` before assuming
-   it's new — if it matches an existing deal, this is a revision; follow the Revisions section of
-   `references/deal-log-format.md`.
+   Note the OM page number for each figure as you pull it — the screener cites the source page
+   for every number it uses (see `references/screener-format.md`), and that's much easier to
+   capture now than to reconstruct later. Check the incoming deal name (and location/unit count)
+   against `deal_log.csv` before assuming it's new — if it matches an existing deal, this is a
+   revision; follow the Revisions section of `references/deal-log-format.md`.
 
 3. **Fill essential gaps with defaults, and flag every one — as Unknowns, not silent guesses.**
    For any field the screen needs that the source materials don't cover, pull the default from
@@ -44,20 +46,30 @@ only for a deal the class votes to pursue, not part of forming the vote itself.
    and say so. If the waterfall terms themselves are undisclosed, note that under Unknowns rather
    than skipping the calculation.
 
-5. **Verify the OM's checkable claims against live public sources — cap rate included, but not
-   limited to it.** Don't just benchmark the OM's numbers against generic ranges, and don't limit
-   verification to the exit cap. Any specific, checkable claim the OM makes — financing rate,
+5. **Verify the OM's checkable claims against live public sources — cap rate and sponsor
+   background always, everything else by judgment.** Don't just benchmark the OM's numbers
+   against generic ranges. Two checks run on every single deal, no exceptions, regardless of how
+   clean the rest of the OM looks:
+   - **Exit cap (and going-in/stabilized yield)** — detailed in `references/screening-benchmarks.md`,
+     since it's usually the single highest-leverage number in the deal (most OMs' terminal value,
+     and therefore most of the return case, hangs on it).
+   - **Sponsor background** — a basic news/litigation search on the sponsor entity and named
+     principals, per claim-verification.md category 9. Every OM has a sponsor, so this always
+     applies; it's not a judgment call the way the other categories are. Run it even when nothing
+     else about the deal raises a flag — the whole point is catching what a clean-looking OM
+     wouldn't tell you. Report a real "found" or "nothing found" outcome either way; never skip
+     straight to Unknowns without having actually searched.
+
+   Beyond those two, any other specific, checkable claim the OM makes — financing rate,
    revenue/expense growth, cited comps, location/market claims, entitlement status, supply
-   pipeline, sponsor background — is worth a targeted search against a live public source rather
-   than accepted at face value. See `references/claim-verification.md` for the full set of claim
-   categories and which public sources fit each (this generalizes across every asset type — the
-   category framework is universal even though which specific check applies depends on what's
-   actually in the OM in front of you). The exit cap check specifically is detailed in
-   `references/screening-benchmarks.md`, since it's usually the single highest-leverage one (most
-   OMs' terminal value, and therefore most of the return case, hangs on it) — always run that one.
-   Beyond it, use judgment on which other categories are material enough to this specific deal to
-   be worth the search time; this has to stay fast, not turn into exhaustive due diligence. Cite
-   what was found; if nothing specific enough turns up, say so rather than skipping it.
+   pipeline — is worth a targeted search against a live public source when material to this
+   specific deal. See `references/claim-verification.md` for the full set of claim categories and
+   which public sources fit each (this generalizes across every asset type — the category
+   framework is universal even though which specific check applies depends on what's actually in
+   the OM in front of you). Use judgment on which of these are worth the search time; this has to
+   stay fast, not turn into exhaustive due diligence. Cite what was found — OM claims get their OM
+   page cited too (see `references/screener-format.md`); if nothing specific enough turns up on an
+   external check, say so rather than skipping it.
 
 6. **Build the SWOT and Unknowns, and land on a Pursue/Pass recommendation.** Use
    `references/screening-benchmarks.md` for context on where the numbers land (general
@@ -103,12 +115,16 @@ only for a deal the class votes to pursue, not part of forming the vote itself.
   post-promote, investor-level return, never the project-level IRR/multiple the sponsor is
   selling.
 - **Don't take the OM's claims at face value where they're checkable.** The OM is written by a
-  party with an obvious incentive to make the deal look good. Cap rate always gets verified
-  against live public data (see `references/screening-benchmarks.md`); other checkable claims —
-  growth assumptions, cited comps, location claims, entitlement status, sponsor background — get
-  the same treatment when material to the deal in front of you (see
-  `references/claim-verification.md`). This applies to any asset type; which specific claims are
-  worth checking depends on what's actually in the OM, not a fixed list.
+  party with an obvious incentive to make the deal look good. Cap rate and sponsor background
+  always get verified against live public sources, on every deal, no exceptions (see
+  `references/screening-benchmarks.md` and claim-verification.md category 9); other checkable
+  claims — growth assumptions, cited comps, location claims, entitlement status — get the same
+  treatment when material to the deal in front of you (see `references/claim-verification.md`).
+  This applies to any asset type; which of the judgment-call categories are worth checking depends
+  on what's actually in the OM, not a fixed list.
+- **Cite the OM page for every figure the screener uses.** See `references/screener-format.md`'s
+  Citations section — this isn't optional for the numbers carrying the recommendation. Capture
+  page numbers while extracting (step 2), not while writing the document.
 - **REAP has no formal buy-box.** `references/screening-benchmarks.md` holds general
   institutional LP reference ranges, not REAP-approved criteria — they inform the SWOT/Unknowns
   judgment call, they don't replace it with a pass/fail test.
