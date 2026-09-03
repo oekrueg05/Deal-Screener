@@ -167,3 +167,18 @@ category becomes a genuinely solvable, scriptable problem rather than a hopeful 
 - `screening-benchmarks.md`'s numeric ranges (IRR, equity multiple, DSCR, etc.) are explicitly
   *not* REAP policy — starter/general context only. If REAP ever adopts real criteria, that file
   is where they'd go, replacing the "no formal buy-box" framing.
+
+## Verification scripts: live-tested (2026-09-03)
+
+All 7 scripts in `.claude/skills/reap-deal-underwriter/scripts/` were built with fixture-based
+unit tests only (this session's sandbox blocks live network calls), then live-tested afterward
+against real APIs and real sources from Owen's own machine. All 7 are now confirmed working
+end-to-end: `fred_rate.py` (FRED), `census_lookup.py` (Census ACS + BLS LAUS), `fema_flood_check.py`
+(Census Geocoder + FEMA NFHL), `verified_data_cache.py` (local, no network), `cap_rate_search.py`
+(pulled Milwaukee's real multifamily cap rate ranges out of a 34-page CBRE PDF survey),
+`pdf_chart_extract.py` (extracted embedded chart images from the same PDF), and
+`sponsor_background_check.py` (confirmed both a clean-negative and a real true-positive litigation
+hit). Three real bugs were found and fixed in the process: FEMA's REST host path had moved
+(`/gis/nfhl/rest/...` → `/arcgis/rest/...`), and `cap_rate_search.py` needed two rounds of fixes to
+stop flooding the caller with near-duplicate/mislabeled candidates from dense rate-survey tables.
+Nothing here is speculative anymore — treat the scripts as working, not just unit-tested.
