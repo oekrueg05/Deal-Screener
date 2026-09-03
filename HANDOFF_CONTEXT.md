@@ -1,0 +1,139 @@
+# REAP Deal Screener — Handoff Context
+
+This is a Claude skill (`reap-deal-underwriter/`) built for Owen, a student in Marquette
+University's Real Estate Asset Program (REAP). It was developed iteratively in a chat session;
+this doc summarizes what it does, why it's shaped the way it is, and what's worth building next
+in Claude Code — particularly the areas that need real engineering rather than prompt/instruction
+tuning.
+
+## What this actually is
+
+REAP's real process: Vito (presumably faculty/advisor) presents a deal in class with a SWOT
+(Strengths/Weaknesses/Opportunities/Threats) and an "Unknowns" list on the board. Each analyst
+then has **48 hours** to form an opinion — **Pursue or Pass** — before the class decides by
+majority vote.
+
+This skill exists to help a student get from "here's an OM Vito handed out" to "here's my
+SWOT + Unknowns + Pursue/Pass call" fast, in the same format that's already on the board — not to
+produce a generic real-estate memo.
+
+Two important framing decisions, both non-negotiable given how the skill evolved:
+
+1. **REAP invests as a limited, non-controlling equity partner (an LP), not a GP.** Every
+   recommendation has to be based on REAP's actual post-promote, investor-level return — not
+   the project-level IRR/multiple the sponsor's offering memorandum headlines. Figuring out
+   which share class REAP would realistically enter (by check size) and running the waterfall
+   math to get REAP's real number is the analytical core of the whole skill.
+2. **REAP has no formal buy-box.** There's no house IRR hurdle, no minimum equity multiple policy
+   — the group hasn't set one. The skill uses general institutional CRE-LP reference ranges as
+   context for judgment, and says so explicitly in every output, rather than pretending REAP has
+   house criteria it doesn't have.
+
+## How the skill evolved (context for why it's shaped this way)
+
+It started as a **full underwriting model generator** — build a 5-6 tab Excel model + a one-page
+memo for every deal Vito sends, deliberately with no verdict (the idea being "every deal gets the
+reps, this is a teaching tool, not a screener"). That's still in there as an optional secondary
+step (`assets/model_template_notes.md` + `references/memo-format.md`), but it is **no longer the
+default output**.
+
+Owen redirected it hard: the actual goal isn't to underwrite every deal in detail — it's to help
+him reach a **fast, defensible opinion** for the 48-hour vote. So the primary deliverable is now
+a short "screener" document (`references/screener-format.md`) that mirrors the board format
+(SWOT + Unknowns, verdict-first), and the full model only gets built later, for a deal the class
+actually votes to pursue.
+
+## File map
+
+- `SKILL.md` — the workflow (10 steps) and top-level framing. Read this first.
+- `references/screener-format.md` — the primary deliverable's format. Verdict-led, symbol-coded,
+  scannable — designed to be read on a phone in a couple minutes.
+- `references/screening-benchmarks.md` — general institutional LP reference ranges (IRR, equity
+  multiple, DSCR, leverage, basis) used as context, explicitly *not* presented as REAP policy.
+  Also where the cap-rate web-search verification logic lives (see below — this is the part
+  most worth hardening in Claude Code).
+- `references/input-schema.md` — what fields to pull from a deal, tagged `[SCREEN]` vs.
+  `[DEEP-DIVE]` so the fast path doesn't accidentally turn into a full underwrite by habit.
+- `references/asset-defaults.md` — fallback assumptions when the OM doesn't state something,
+  always flagged rather than silently assumed.
+- `references/deal-log-format.md` — a running `deal_log.csv` record (verdict, LP-level return,
+  vote deadline, and — once known — how the class actually voted, so hit-rate can be tracked
+  over a semester). Logged in the background; not delivered as a file unless asked.
+- `references/mcp-integration.md` — how to reach REAP OS (a deal-inbox system Owen's account has
+  some connector for) from either a direct-tool surface (e.g. Claude Code) or an
+  artifact/API-only surface (claude.ai chat). **This is speculative** — written defensively based
+  on how the connector showed up in the environment, never actually tested against a live REAP OS
+  endpoint. Real priority for Claude Code: wire this up for real and test it, once Owen confirms
+  there's something in the REAP OS inbox to pull.
+- `assets/model_template_notes.md` — the full 5-6 tab Excel underwriting model structure
+  (Deal Summary, Assumptions, Pro Forma, Debt Schedule, Returns, optional Sensitivity), now
+  secondary/optional — only built post-vote for a pursued deal.
+- `references/memo-format.md` — the optional deeper-dive memo that can accompany the full model.
+
+## The cap rate web-search feature (Owen's idea, already partially built)
+
+Early screens were checking the OM's exit cap / going-in yield assumption only against generic
+institutional benchmarks — which meant a sponsor's optimistic cap rate assumption could sail
+through unchallenged. Owen's fix: **always web-search current cap rates for the deal's specific
+market and asset class**, and check the OM's assumption against that, not just a generic range.
+
+This is now step 5 of the workflow and is documented in `screening-benchmarks.md` under "Cap rate
+is location-specific — verify it, don't just benchmark it." Current logic:
+
+1. Search for the deal's actual named market first (many brokerages — Marcus & Millichap
+   especially — publish dedicated reports for 40-50+ individual metros, not just the top 15-20).
+2. Don't gatekeep to big-name brokerages (CBRE/JLL/M&M/C&W) — any reliable, named, tiered source
+   works (regional brokerages, county/city economic development reports, RealPage, Yardi Matrix,
+   CoStar-sourced coverage, credible local business-journal reporting citing licensed data).
+3. What matters is the **tier breakout** (market *and* asset-class/quality tier — e.g. "suburban
+   Class A"), not a blended national headline number, which will make a small or boutique deal
+   look more mispriced than it is.
+4. If a report exists but its actual cap rate figure is in a chart/graphic rather than
+   extractable text, say so explicitly rather than blending a proxy number in as if it were
+   precise — this came up for real on a Milwaukee deal, where Marcus & Millichap clearly
+   publishes a dedicated Milwaukee report, but its chart values weren't retrievable via a plain
+   web fetch.
+5. Only fall back to a comparable market as an explicit, labeled proxy if a genuine search for
+   the actual market turns up nothing usable.
+6. Adjust for scale — a small boutique asset (e.g. 14 units) typically trades at a premium
+   (higher cap rate, lower value) to the institutional-scale range most surveys are built from;
+   note that explicitly rather than applying an institutional-scale number directly.
+
+**This is the single highest-value thing to harden in Claude Code**, for a concrete reason: right
+now it depends on whatever a generic web_search tool's snippets happen to surface, and multiple
+real cap rate reports (including Marcus & Millichap's Milwaukee one, confirmed to exist) have
+their actual numbers embedded in chart images that a text-based fetch can't read. In a coding
+environment this becomes a solvable, scriptable problem:
+
+- Programmatic PDF fetch + chart/image extraction (e.g. `pdfplumber`/`PyMuPDF` to pull embedded
+  images, then a vision-capable call to read the chart values) instead of hoping search snippets
+  contain the number in prose.
+- A small local cache/lookup of recent cap rate figures by market + asset tier, built up over the
+  semester as more deals get screened, so repeat markets (Milwaukee will come up again) don't
+  need a fresh from-scratch search every time.
+- If REAP or Marquette has (or could get) access to a real paid CRE data source (CoStar, Yardi
+  Matrix, RealPage, Real Capital Analytics) with an API, wiring that in directly would be a
+  categorical upgrade over public web search for this specific check.
+
+## Other things worth doing in Claude Code specifically (vs. staying in chat)
+
+- **Actually wire up and test the REAP OS connector** (see `mcp-integration.md`) once there's a
+  real deal in the inbox to pull — this needs a real dev loop (auth, endpoint testing, error
+  handling), not a markdown description of intended behavior.
+- **Git-track the skill** so changes across the semester (and any other REAP officers who touch
+  it) have real history/diffs, instead of relying on conversational edit history.
+- Everything else — running an actual screen on a new deal, writing the SWOT, computing LP-level
+  returns, building the optional full model — works fine in chat with this skill as-is and
+  doesn't need a coding environment. Don't rebuild what isn't broken; extend what's listed above.
+
+## Known rough edges / open questions to be aware of
+
+- `mcp-integration.md` is unvalidated — treat it as a best-guess design, not confirmed-working
+  code.
+- The debt schedule in the optional full model (`assets/model_template_notes.md`) uses a monthly
+  amortization roll-up specifically to avoid an earlier bug where an annual-only `PMT` calc
+  couldn't handle non-whole-year interest-only periods — worth keeping if this gets reimplemented
+  in code rather than an Excel formula chain.
+- `screening-benchmarks.md`'s numeric ranges (IRR, equity multiple, DSCR, etc.) are explicitly
+  *not* REAP policy — starter/general context only. If REAP ever adopts real criteria, that file
+  is where they'd go, replacing the "no formal buy-box" framing.
