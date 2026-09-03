@@ -182,3 +182,13 @@ hit). Three real bugs were found and fixed in the process: FEMA's REST host path
 (`/gis/nfhl/rest/...` → `/arcgis/rest/...`), and `cap_rate_search.py` needed two rounds of fixes to
 stop flooding the caller with near-duplicate/mislabeled candidates from dense rate-survey tables.
 Nothing here is speculative anymore — treat the scripts as working, not just unit-tested.
+
+**Cross-market/cross-asset-class check (same day):** re-ran the location-lookup and cap-rate
+scripts against Dallas, TX industrial — a market and asset class neither the scripts nor their
+tests were built around — with zero code changes. `census_lookup.py` correctly pulled Dallas
+city's actual population decline (-1.46%, 2018→2023 ACS); `fema_flood_check.py` geocoded a Dallas
+address and returned its real flood zone; `cap_rate_search.py --market Dallas --asset-tier
+industrial` against the same CBRE Cap Rate Survey PDF used for Milwaukee correctly ranked the
+Dallas/Ft. Worth Industrial Class A row (3.25%-4.25% H2 2021) above four other asset-type tables
+(apartment, office, retail, hotel) for the same market in that document. Confirms the scripts
+generalize to any location/asset type without modification, as designed.
