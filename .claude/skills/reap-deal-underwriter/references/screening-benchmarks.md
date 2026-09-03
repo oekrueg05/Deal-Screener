@@ -68,6 +68,13 @@ relevance per deal:
   quantified range you can actually pull (even from a different but reasonable comp, clearly
   labeled as such) rather than blending the two into one number that implies more precision than
   you actually have.
+
+  **In Claude Code:** `scripts/pdf_chart_extract.py --url <report> --out-dir <dir>` pulls the
+  embedded chart image(s) out of the PDF (and can rasterize a whole page with `--render-pages`
+  when the chart is vector-drawn, not an embedded image) so you can `Read()` them directly and
+  read the axis labels/values yourself — the confirmed real case this solves: Marcus & Millichap's
+  Milwaukee multifamily report has a genuine per-market cap rate chart that a plain text fetch
+  can't see.
 - **If you do fall back to a proxy market, label it as exactly that** — not as if it were the
   subject property's own market. "This market isn't individually broken out in [source]; using
   [comp market] as the closest quantified reference point" is honest; presenting the comp

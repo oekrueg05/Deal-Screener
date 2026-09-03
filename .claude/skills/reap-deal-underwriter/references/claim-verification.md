@@ -7,6 +7,14 @@ retail, industrial, hospitality, or a ground-up development — not a fixed chec
 specific deal or asset type. Which categories actually apply, and how deep to go on each, depends
 entirely on what's present and material in the specific OM in front of you.
 
+## Verification scripts (Claude Code only)
+`scripts/` has small, tested Python scripts that harden six of these nine categories against a
+real public source instead of a hopeful web search (see each category below for which script and
+how). `scripts/verified_data_cache.py` caches any verified figure by (category, market,
+asset_tier) so a repeat market doesn't need a fresh search on the next deal. None of this applies
+in a chat-only environment without code execution — fall back to web search there, same as before.
+Categories 3, 4, 7, and 8 have no script yet; still use a targeted web search for those.
+
 ## How to use this file
 Scan the OM for claims falling into the categories below. For each one that's present *and*
 material to the return case, verify it against a live public source before it goes into the
@@ -20,14 +28,29 @@ still has to stay fast (see `screener-format.md`'s speed-over-completeness princ
 
 ### 1. Financing rate / index
 Any assumed interest rate tied to a named index (Treasury, SOFR, Prime) — verify the index's
-actual current value from a primary source (e.g. FRED for Treasury/SOFR series) rather than a
-news article's restated figure. Applies to any deal with debt, any asset type.
+actual current value from a primary source rather than a news article's restated figure. Applies
+to any deal with debt, any asset type.
+
+**In Claude Code:** run `scripts/fred_rate.py --series DGS7` (or `DGS10`, `SOFR`, etc.; add
+`--spread-bps` for an OM's "index + spread" language) — pulls the latest published value straight
+from FRED, dated and sourced. Requires a free `FRED_API_KEY`
+(https://fred.stlouisfed.org/docs/api/api_key.html). In chat without code execution, fall back to
+a targeted web search.
 
 ### 2. Yield / cap rate
 Covered in detail in `screening-benchmarks.md`. Search for the deal's actual market *and* the
 relevant asset-class/quality tier for whatever asset type this deal is (multifamily, office,
 retail, industrial, hospitality) — never a generic blended national figure, and never a tier
 that doesn't match the asset type in front of you.
+
+**In Claude Code:** use `WebSearch` to find candidate market-specific reports first, then run
+`scripts/cap_rate_search.py --url <candidate> --market <market> --asset-tier <tier>` to fetch and
+score every percentage figure in each candidate by proximity to cap-rate/market/tier language. If
+a PDF candidate reports no text match, it says so and points at `scripts/pdf_chart_extract.py`
+(see category 6's cousin note below) rather than silently giving up. Check
+`scripts/verified_data_cache.py get --category cap_rate --market <market> --asset-tier <tier>`
+first — a repeat market from an earlier deal this semester may already be cached; `... set ...`
+the result afterward so the next deal in that market doesn't need a fresh search.
 
 ### 3. Growth assumptions (revenue, expense)
 Whatever growth rate the OM assumes for its primary revenue line and for expenses — check against
@@ -50,10 +73,22 @@ employment data; Walk Score has a public API; submarket vacancy is often publish
 associations, brokerages, or regional planning bodies. Applies to any asset type, since every OM
 makes some version of a "why this location" argument.
 
+**In Claude Code:** run `scripts/census_lookup.py --geo "<City, ST>" --metric population` (also
+`median_income`, `population_growth`, `unemployment_rate`) for population/income/employment claims
+specifically — pulls from Census ACS and BLS LAUS directly. Submarket vacancy, walkability, and
+traffic-count claims still need a targeted web search; there's no free API wired up for those yet.
+
 ### 6. Physical/environmental risk
 Flood zone status and environmental history — FEMA flood maps and, where available, state
 environmental agency records are public and free. Matters for any property type, and increasingly
 material given rising insurance costs nationally.
+
+**In Claude Code:** run `scripts/fema_flood_check.py --address "<property address>"` — geocodes
+the address and checks it against FEMA's National Flood Hazard Layer directly, returning the zone
+and whether it falls in the mapped Special Flood Hazard Area. No feature returned isn't
+automatically "no risk" — the script flags that ambiguity explicitly rather than reporting a false
+clean bill of health. State environmental agency records still need a manual/web search; nothing
+wired up for those yet.
 
 ### 7. Entitlement / deal-status claims
 Any claim about where a deal stands procedurally — a signed purchase agreement, a pending
@@ -72,6 +107,13 @@ asset type, since new supply is a real risk to every one of them.
 A basic news/litigation search on the sponsor entity and named principals — standard practice for
 an institutional LP's diligence, and something the skill currently does none of. Applies to every
 deal, since every OM has a sponsor.
+
+**In Claude Code:** `WebSearch` for `"<sponsor entity>" lawsuit OR litigation OR SEC OR
+bankruptcy` (and the same per named principal), then run `scripts/sponsor_background_check.py
+--sponsor "<entity>" --principal "<name>" --url <candidate> --url <candidate>...` to fetch each
+candidate and flag sponsor/principal mentions near litigation-risk language. Reports "found" (with
+cited snippet) or "nothing found" explicitly — treat "nothing found" as a disclosed limitation of
+the search, not a verified clean record.
 
 ## Discipline
 - Only check what's actually material and present in this specific OM — forcing an irrelevant

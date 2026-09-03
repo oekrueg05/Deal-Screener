@@ -1,0 +1,10 @@
+{
+  "result": {
+    "addressMatches": [
+      {
+        "matchedAddress": "7746 MENOMONEE RIVER PKWY, WAUWATOSA, WI, 53213",
+        "coordinates": {"x": -88.0201, "y": 43.0642}
+      }
+    ]
+  }
+}

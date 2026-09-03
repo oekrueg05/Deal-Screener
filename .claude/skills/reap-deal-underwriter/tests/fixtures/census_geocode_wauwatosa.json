@@ -1,0 +1,15 @@
+{
+  "result": {
+    "addressMatches": [
+      {
+        "matchedAddress": "WAUWATOSA, WI",
+        "coordinates": {"x": -88.0223, "y": 43.0495},
+        "geographies": {
+          "Counties": [
+            {"GEOID": "55079", "NAME": "Milwaukee County", "STATE": "55", "COUNTY": "079"}
+          ]
+        }
+      }
+    ]
+  }
+}
