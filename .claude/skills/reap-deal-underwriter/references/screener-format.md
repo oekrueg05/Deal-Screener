@@ -44,7 +44,10 @@ recommendation — keep each line to the number and the call, not a paragraph of
 Always include a line verifying the exit cap (and going-in/stabilized yield, if applicable)
 against real market data via web search — cite what was found briefly (e.g., "~5.0-5.5% per
 [source]") rather than just restating the OM's own assumption back at itself as if that settles
-it.
+it. Add a line for any other claim verified per `references/claim-verification.md` when it turned
+up something worth showing (e.g., a growth-rate assumption checked against a public rent index, a
+comp that turned out stale, an entitlement status confirmed or contradicted by public record) —
+same discipline, same format: the number, the source, the read.
 
 **SWOT**
 Four short bullet groups, matching the board format exactly:

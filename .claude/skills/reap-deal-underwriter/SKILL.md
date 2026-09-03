@@ -44,13 +44,20 @@ only for a deal the class votes to pursue, not part of forming the vote itself.
    and say so. If the waterfall terms themselves are undisclosed, note that under Unknowns rather
    than skipping the calculation.
 
-5. **Verify the exit cap (and any going-in yield) against real market data.** Don't just
-   benchmark the OM's cap rate against generic ranges — search for current cap rates in that
-   specific metro/submarket and asset type (a couple of targeted searches, not a full market
-   study — see `references/screening-benchmarks.md`) and compare. This is one of the highest-
-   leverage checks available, since terminal value usually drives most of the return case, and
-   it's the one number in most OMs least likely to get an independent sanity check otherwise.
-   Cite what was found; if nothing specific enough turns up, say so rather than skipping it.
+5. **Verify the OM's checkable claims against live public sources — cap rate included, but not
+   limited to it.** Don't just benchmark the OM's numbers against generic ranges, and don't limit
+   verification to the exit cap. Any specific, checkable claim the OM makes — financing rate,
+   revenue/expense growth, cited comps, location/market claims, entitlement status, supply
+   pipeline, sponsor background — is worth a targeted search against a live public source rather
+   than accepted at face value. See `references/claim-verification.md` for the full set of claim
+   categories and which public sources fit each (this generalizes across every asset type — the
+   category framework is universal even though which specific check applies depends on what's
+   actually in the OM in front of you). The exit cap check specifically is detailed in
+   `references/screening-benchmarks.md`, since it's usually the single highest-leverage one (most
+   OMs' terminal value, and therefore most of the return case, hangs on it) — always run that one.
+   Beyond it, use judgment on which other categories are material enough to this specific deal to
+   be worth the search time; this has to stay fast, not turn into exhaustive due diligence. Cite
+   what was found; if nothing specific enough turns up, say so rather than skipping it.
 
 6. **Build the SWOT and Unknowns, and land on a Pursue/Pass recommendation.** Use
    `references/screening-benchmarks.md` for context on where the numbers land (general
@@ -95,6 +102,13 @@ only for a deal the class votes to pursue, not part of forming the vote itself.
   partner in almost every deal Vito sends — the recommendation has to be based on REAP's
   post-promote, investor-level return, never the project-level IRR/multiple the sponsor is
   selling.
+- **Don't take the OM's claims at face value where they're checkable.** The OM is written by a
+  party with an obvious incentive to make the deal look good. Cap rate always gets verified
+  against live public data (see `references/screening-benchmarks.md`); other checkable claims —
+  growth assumptions, cited comps, location claims, entitlement status, sponsor background — get
+  the same treatment when material to the deal in front of you (see
+  `references/claim-verification.md`). This applies to any asset type; which specific claims are
+  worth checking depends on what's actually in the OM, not a fixed list.
 - **REAP has no formal buy-box.** `references/screening-benchmarks.md` holds general
   institutional LP reference ranges, not REAP-approved criteria — they inform the SWOT/Unknowns
   judgment call, they don't replace it with a pass/fail test.

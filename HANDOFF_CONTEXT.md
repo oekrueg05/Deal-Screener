@@ -50,8 +50,12 @@ actually votes to pursue.
   scannable — designed to be read on a phone in a couple minutes.
 - `references/screening-benchmarks.md` — general institutional LP reference ranges (IRR, equity
   multiple, DSCR, leverage, basis) used as context, explicitly *not* presented as REAP policy.
-  Also where the cap-rate web-search verification logic lives (see below — this is the part
-  most worth hardening in Claude Code).
+  Also where the exit-cap web-search verification logic lives in detail (see below).
+- `references/claim-verification.md` — the generalized version of that pattern: nine categories
+  of OM claims worth verifying against live public sources (financing rate, yield/cap rate,
+  growth assumptions, cited comps, location claims, environmental risk, entitlement status,
+  supply pipeline, sponsor background), applicable to any asset type. Which categories apply to a
+  given deal is a per-deal judgment call, not a fixed checklist.
 - `references/input-schema.md` — what fields to pull from a deal, tagged `[SCREEN]` vs.
   `[DEEP-DIVE]` so the fast path doesn't accidentally turn into a full underwrite by habit.
 - `references/asset-defaults.md` — fallback assumptions when the OM doesn't state something,
@@ -70,15 +74,30 @@ actually votes to pursue.
   secondary/optional — only built post-vote for a pursued deal.
 - `references/memo-format.md` — the optional deeper-dive memo that can accompany the full model.
 
-## The cap rate web-search feature (Owen's idea, already partially built)
+## The claim-verification feature (Owen's idea, generalized across asset types)
 
 Early screens were checking the OM's exit cap / going-in yield assumption only against generic
 institutional benchmarks — which meant a sponsor's optimistic cap rate assumption could sail
-through unchallenged. Owen's fix: **always web-search current cap rates for the deal's specific
-market and asset class**, and check the OM's assumption against that, not just a generic range.
+through unchallenged. Owen's fix, generalized: **any specific, checkable claim an OM makes gets
+verified against a live public source instead of accepted at face value** — not just the cap
+rate, and not tied to any specific asset type or the two example deals (Juniper Apartments,
+Sonne Residences) this skill was developed against.
 
-This is now step 5 of the workflow and is documented in `screening-benchmarks.md` under "Cap rate
-is location-specific — verify it, don't just benchmark it." Current logic:
+This lives in two places now:
+
+- `references/screening-benchmarks.md` — the exit cap check specifically, in detail. This one
+  always runs, on every deal, because terminal value usually drives most of the return case.
+- `references/claim-verification.md` — the general framework. Nine claim **categories** that show
+  up in nearly any OM regardless of asset type (financing rate/index, yield/cap rate, growth
+  assumptions, cited comps, location/market claims, physical/environmental risk, entitlement/deal
+  status, supply pipeline, sponsor background), each mapped to what kind of public source would
+  verify it. Which categories actually apply to a given deal — and how deep to go on each — is a
+  judgment call based on what's actually present and material in that specific OM, not a fixed
+  checklist run mechanically every time. The category framework is universal; the specific check
+  (which index, which public database, which named comp) adapts to whatever asset type and deal
+  structure is actually in front of the analyst.
+
+Current cap-rate-specific logic (documented in detail in `screening-benchmarks.md`):
 
 1. Search for the deal's actual named market first (many brokerages — Marcus & Millichap
    especially — publish dedicated reports for 40-50+ individual metros, not just the top 15-20).
@@ -99,21 +118,32 @@ is location-specific — verify it, don't just benchmark it." Current logic:
    (higher cap rate, lower value) to the institutional-scale range most surveys are built from;
    note that explicitly rather than applying an institutional-scale number directly.
 
-**This is the single highest-value thing to harden in Claude Code**, for a concrete reason: right
-now it depends on whatever a generic web_search tool's snippets happen to surface, and multiple
-real cap rate reports (including Marcus & Millichap's Milwaukee one, confirmed to exist) have
-their actual numbers embedded in chart images that a text-based fetch can't read. In a coding
-environment this becomes a solvable, scriptable problem:
+**This whole pattern — not just the cap rate instance of it — is the single highest-value thing
+to harden in Claude Code**, for a concrete reason: right now every category in
+`claim-verification.md` depends on whatever a generic web_search tool's snippets happen to
+surface, and (confirmed for real on the cap rate check) reports often have their actual numbers
+embedded in chart images that a text-based fetch can't read. In a coding environment each
+category becomes a genuinely solvable, scriptable problem rather than a hopeful search:
 
 - Programmatic PDF fetch + chart/image extraction (e.g. `pdfplumber`/`PyMuPDF` to pull embedded
   images, then a vision-capable call to read the chart values) instead of hoping search snippets
-  contain the number in prose.
-- A small local cache/lookup of recent cap rate figures by market + asset tier, built up over the
-  semester as more deals get screened, so repeat markets (Milwaukee will come up again) don't
-  need a fresh from-scratch search every time.
-- If REAP or Marquette has (or could get) access to a real paid CRE data source (CoStar, Yardi
-  Matrix, RealPage, Real Capital Analytics) with an API, wiring that in directly would be a
-  categorical upgrade over public web search for this specific check.
+  contain the number in prose — useful for cap rate surveys specifically, but the same technique
+  applies to any claim-verification category where the source data is graphical (rent trend
+  charts, vacancy trend charts, supply pipeline charts).
+- A small local cache/lookup of recently-verified figures by category + market + asset tier
+  (cap rates, rent growth indices, whatever else gets checked), built up over the semester as more
+  deals get screened, so repeat markets (Milwaukee will come up again) don't need a fresh
+  from-scratch search every time — this generalizes across every category in
+  `claim-verification.md`, not just cap rate.
+- API integrations per claim category, for the ones that have a real free/public API rather than
+  requiring search-and-scrape: FRED for Treasury/SOFR rates (category 1), Census/BLS for
+  population and employment claims (category 5), FEMA for flood zone data (category 6), and — if
+  ever available — a paid CRE data source (CoStar, Yardi Matrix, RealPage, Real Capital Analytics)
+  for cap rates and comps (categories 2 and 4), which would be a categorical upgrade over public
+  web search for those specifically.
+- A basic sponsor-background search routine (category 9) — currently the skill does this for
+  zero deals; even a simple "search the sponsor entity name + principal names for news/litigation"
+  step would be new coverage, not a hardening of something that already exists.
 
 ## Other things worth doing in Claude Code specifically (vs. staying in chat)
 

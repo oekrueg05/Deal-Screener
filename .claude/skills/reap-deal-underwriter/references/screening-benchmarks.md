@@ -32,8 +32,13 @@ directly, not as an LP under a GP), use project-level figures and say so.
 The ranges above are generic. Cap rates are not — they move by metro, submarket, and asset
 class, and an OM's exit cap (and any stated going-in/stabilized yield) is the sponsor's own
 assumption, not a fact. This is checkable with a couple of quick, targeted web searches every
-time, and it's one of the highest-leverage checks in the whole screen, because the exit cap
-assumption drives most of the terminal value in almost every return calc:
+time, and it's the single highest-leverage instance of a broader pattern — see
+`references/claim-verification.md` for the full set of OM-claim categories worth verifying this
+way (financing rate, growth assumptions, cited comps, location claims, entitlement status, supply
+pipeline, sponsor background) across any asset type. Cap rate gets its own detailed section here
+because it usually drives most of the terminal value in the return calc, so it's worth verifying
+on every single deal without exception, whereas the other categories are judgment calls on
+relevance per deal:
 - **Search for a tiered source first, not a headline national average — and don't gatekeep to a
   short list of big-name brokerages.** CBRE, JLL, Marcus & Millichap, and Cushman & Wakefield all
   publish cap rates broken out by market *and* asset class/quality tier (e.g., "suburban Class
