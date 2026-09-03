@@ -62,14 +62,27 @@ def score_match(context_lower, market, asset_tier):
 
 
 def find_candidates(text, market, asset_tier, page=None):
+    """
+    Score every percentage in text by proximity to cap-rate/market/tier
+    language. A dense rate-survey table can pack a dozen '%' signs within a
+    couple hundred characters (e.g. "Milwaukee 4.75% - 5.25% ... 5.5% - 5.75%
+    ..."), and each one's context window would otherwise re-capture the same
+    table row -- so matches whose windows overlap a previously *kept* match
+    collapse into that one candidate instead of spawning a near-duplicate
+    per number.
+    """
     candidates = []
+    last_kept_end = -CONTEXT_CHARS  # sentinel so the first match is never skipped
     for m in PCT_RE.finditer(text):
+        if m.start() - last_kept_end < CONTEXT_CHARS:
+            continue  # overlaps the previously kept match's context window
         start = max(0, m.start() - CONTEXT_CHARS)
         end = min(len(text), m.end() + CONTEXT_CHARS)
         snippet = " ".join(text[start:end].split())
         score, has_cap_rate, has_market, has_tier = score_match(snippet.lower(), market, asset_tier)
         if score == 0:
             continue  # a bare percentage with no cap-rate/market/tier context isn't useful
+        last_kept_end = m.end()
         candidates.append(
             {
                 "value_pct": float(m.group(1)),
@@ -84,23 +97,28 @@ def find_candidates(text, market, asset_tier, page=None):
     return candidates
 
 
+MAX_CANDIDATES = 20
+
+
+def _rank_and_cap(candidates, max_candidates=MAX_CANDIDATES):
+    """Best matches first (market-mentioning ties broken above generic ones); cap the list length
+    so a multi-asset-type survey (apartment/office/retail/industrial/hotel tables all in one PDF)
+    doesn't dump dozens of candidates the caller has to scroll through by hand."""
+    ranked = sorted(candidates, key=lambda c: (-c["score"], -int(c["mentions_market"])))
+    truncated = len(ranked) > max_candidates
+    return ranked[:max_candidates], truncated, len(ranked)
+
+
 def process_url(url, market, asset_tier):
     content = get_bytes(url)
     kind = sniff_kind(content)
 
     if kind == "pdf":
         candidates = []
-        pages_with_pct_no_context = []
         for page_num, text in page_texts(content):
-            page_candidates = find_candidates(text, market, asset_tier, page=page_num)
-            candidates.extend(page_candidates)
-            if not page_candidates and PCT_RE.search(text):
-                pages_with_pct_no_context.append(page_num)
-        result = {
-            "url": url,
-            "kind": "pdf",
-            "candidates": sorted(candidates, key=lambda c: -c["score"]),
-        }
+            candidates.extend(find_candidates(text, market, asset_tier, page=page_num))
+        kept, truncated, total = _rank_and_cap(candidates)
+        result = {"url": url, "kind": "pdf", "candidates": kept}
         if not candidates:
             result["note"] = (
                 "no percentage in this PDF's extractable text was near cap-rate/market/tier "
@@ -108,13 +126,24 @@ def process_url(url, market, asset_tier):
                 "image rather than text -- run pdf_chart_extract.py on this URL and Read() the "
                 "extracted images rather than assuming the number isn't there."
             )
+        elif truncated:
+            result["note"] = (
+                f"{total} candidates matched cap-rate/market/tier language; showing the "
+                f"top {MAX_CANDIDATES} by relevance (market-mentioning ranked first)."
+            )
         return result
 
     text = html_to_text(content)
     candidates = find_candidates(text, market, asset_tier)
-    result = {"url": url, "kind": "html", "candidates": sorted(candidates, key=lambda c: -c["score"])}
+    kept, truncated, total = _rank_and_cap(candidates)
+    result = {"url": url, "kind": "html", "candidates": kept}
     if not candidates:
         result["note"] = "no percentage on this page was near cap-rate/market/tier language."
+    elif truncated:
+        result["note"] = (
+            f"{total} candidates matched cap-rate/market/tier language; showing the "
+            f"top {MAX_CANDIDATES} by relevance (market-mentioning ranked first)."
+        )
     return result
 
 

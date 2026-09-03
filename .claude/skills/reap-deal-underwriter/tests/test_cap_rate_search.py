@@ -57,6 +57,32 @@ def test_pdf_chart_only_reports_no_text_match_and_points_at_chart_extract(monkey
     assert "pdf_chart_extract.py" in result["note"]
 
 
+def test_dense_survey_table_collapses_to_one_candidate_per_row():
+    # Mirrors a real CBRE Cap Rate Survey table row: many '%' signs packed
+    # within a couple hundred characters. Before the overlap-merge fix this
+    # produced ~15 near-duplicate candidates for this single row alone.
+    row = (
+        "Kansas City 4.25% - 4.5% 4% - 4.5% 4.75% - 5.25% 4.25% - 4.75% "
+        "Milwaukee 4.75% - 5.25% 4.5% - 5% 5.5% - 5.75% 4.75% - 5.5% "
+        "Minneapolis/St. Paul 4.25% - 4.5% 4% - 4.25% 4.75% - 5% 4.5% - 4.75%"
+    )
+    candidates = cap_rate_search.find_candidates(row, "Milwaukee", None, page=21)
+    assert len(candidates) <= 2, f"expected the Milwaukee row to collapse, got {len(candidates)} candidates"
+    assert any(c["mentions_market"] for c in candidates)
+
+
+def test_rank_and_cap_truncates_and_prioritizes_market_matches():
+    candidates = [{"value_pct": float(i), "snippet": "s", "page": 1, "score": 2, "mentions_market": False} for i in range(30)]
+    candidates.append({"value_pct": 99.0, "snippet": "milwaukee row", "page": 1, "score": 2, "mentions_market": True})
+
+    kept, truncated, total = cap_rate_search._rank_and_cap(candidates)
+
+    assert total == 31
+    assert truncated is True
+    assert len(kept) == cap_rate_search.MAX_CANDIDATES
+    assert kept[0]["mentions_market"] is True  # market match ranked first despite tied score
+
+
 def test_main_end_to_end(monkeypatch, capsys):
     html_bytes = load_bytes("cap_rate_page.html")
     monkeypatch.setattr(cap_rate_search, "get_bytes", lambda url: html_bytes)
