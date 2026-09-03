@@ -25,7 +25,7 @@ sys.path.insert(0, __file__.rsplit("/", 1)[0])
 from _http import VerificationError, emit, fail, get_json, now_iso  # noqa: E402
 
 GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
-NFHL_FLOOD_ZONES_QUERY_URL = "https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHL/MapServer/28/query"
+NFHL_FLOOD_ZONES_QUERY_URL = "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query"
 
 # FLD_ZONE codes where SFHA_TF == 'T' (Special Flood Hazard Area, i.e. the
 # 100-year/1%-annual-chance floodplain) vs. minimal-risk zones.
